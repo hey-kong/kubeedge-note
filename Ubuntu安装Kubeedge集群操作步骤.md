@@ -233,29 +233,12 @@ kubectl apply -f kube-flannel-cloud.yml
 kubectl apply -f kube-flannel-edge.yml
 ```
 
-使用kubeadm部署的k8s集群，那么kube-proxy会下发到端侧节点，但是edgecore无法与kube-proxy并存，所以要修改kube-proxy的daemonset节点亲和性，禁止在端侧部署kube-proxy
-```bash
-kubectl edit ds kube-proxy -n kube-system
-# 添加以下配置
-    ..
-    spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: node-role.kubernetes.io/agent
-                operator: DoesNotExist
-      containers:
-      ..
-```
-
 再等待一段时间，再执行`kubectl get pods -A`，这时所有pod都变成ready了，那么就成功建立起Kubernetes集群了，后面就是其他节点加入这个集群了。可以执行`kubectl get nodes`查看节点情况，这个时候应该只有一个master节点，并且是ready状态。
 
 
 ### 主节点开启Kubeedge cloud服务
 
-这里部署Kubeedge v1.8.0。下载keadm
+这里部署Kubeedge v1.8.1。下载keadm
 
 ```bash
 #可自行前往官网下载
@@ -265,39 +248,52 @@ tar -zxvf keadm-v1.8.0-linux-amd64.tar.gz
 #master部署kubeedge
 cd keadm-v1.8.0-linux-amd64/keadm
 #在keadm目录下，执行init操作(ip为master结点ip)：
-./keadm init --advertise-address="175.178.160.127" --kubeedge-version=1.8.0
+./keadm init --advertise-address="175.178.160.127" --kubeedge-version=1.8.1
 #【注】在这里会出现错误，原因为github无法访问，解决方案：通过 http://ping.chinaz.com/github.com 查看ip，修改/etc/hosts：
 52.78.231.108    github.com
 185.199.111.133  raw.githubusercontent.com
+```
+
+生成stream证书
+
+```bash
+export CLOUDCOREIPS="175.178.160.127"
+#复制kubeedge生成证书的certgen.sh文件，放入/etc/kubeedge
+chmod +x /etc/kubeedge/certgen.sh
+/etc/kubeedge/certgen.sh stream
 ```
 
 在keadm-v1.8.0-linux-amd64/keadm目录下执行`./keadm gettoken`获取token。
 
 修改配置，`vim /etc/kubeedge/config/cloudcore.yaml`，重启cloudcore后才生效
 
+```
+modules:
+  ..
+  cloudStream:
+    enable: true
+    streamPort: 10003
+  ..
+  dynamicController:
+    enable: true
+..
+```
+
 ```bash
-# 开启dynamic controller
-diff --git a/cloudcore.yaml b/cloudcore.yaml
-index 28235a9..313375c 100644
---- a/cloudcore.yaml
-+++ b/cloudcore.yaml
-@@ -1,7 +1,3 @@
- apiVersion: cloudcore.config.kubeedge.io/v1alpha1
- commonConfig:
-   tunnelPort: 10350
-@@ -67,7 +63,7 @@ modules:
-     load:
-       updateDeviceStatusWorkers: 1
-   dynamicController:
--    enable: false
-+    enable: true    # 开启dynamicController以支持edgecore的listwatch功能
-   edgeController:
-     buffer:
-       configMapEvent: 1
-@@ -119,5 +115,3 @@ modules:
-     restTimeout: 60
-   syncController:
-     enable: true
+# 运行查看ipTunnelPort
+kubectl get cm tunnelport -nkubeedge -oyaml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  annotations:
+    tunnelportrecord.kubeedge.io: '{"ipTunnelPort":{"10.0.12.14":10351},"port":{"10351":true}}'
+  creationTimestamp: "2022-03-10T06:01:15Z"
+...
+
+# 根据ConfigMap设置iptables
+# iptables -t nat -A OUTPUT -p tcp --dport $YOUR-TUNNEL-PORT -j DNAT --to $YOUR-CLOUDCORE-IP:10003
+iptables -t nat -A OUTPUT -p tcp --dport 10351 -j DNAT --to 10.0.12.14:10003
 ```
 
 cloudcore通过systemd管理
@@ -325,7 +321,28 @@ sudo apt-get update
 sudo apt-get install helm
 
 #安装edgemesh
-helm install edgemesh --set server.nodeName=all-in-one --set server.publicIP=192.168.50.148 https://raw.githubusercontent.com/kubeedge/edgemesh/main/build/helm/edgemesh.tgz
+helm install edgemesh --set server.nodeName=cloud.kubeedge --set server.advertiseAddress="{175.178.160.127}" https://raw.githubusercontent.com/kubeedge/edgemesh/main/build/helm/edge/edgemesh/medgemesh.tgz
+
+#检验部署结果
+helm ls
+kubectl get all -n kubeedge -o wide
+```
+
+使用kubeadm部署的k8s集群，那么kube-proxy会下发到端侧节点，但是edgecore无法与kube-proxy并存，所以要修改kube-proxy的daemonset节点亲和性，禁止在端侧部署kube-proxy
+```bash
+kubectl edit ds kube-proxy -n kube-system
+# 添加以下配置
+    ..
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/edge
+                operator: DoesNotExist
+      containers:
+      ..
 ```
 
 后续如果关闭 cloudcore 需要执行
@@ -342,7 +359,7 @@ pkill cloudcore
 ```bash
 # 边缘端
 sudo add-apt-repository ppa:mosquitto-dev/mosquitto-ppa 
-sudo apt update 
+sudo apt update
 # 这一步执行完后可能同样会出现前面说的no pubkey的错误，和前面一样解决就行了
 sudo apt -y install mosquitto
 mosquitto -d -p 1883
@@ -359,7 +376,7 @@ tar -zxvf keadm-v1.8.0-linux-amd64.tar.gz
 cd keadm-v1.8.0-linux-amd64/keadm
 sudo rm /usr/local/bin/edgecore
 sudo rm /etc/systemd/system/edgecore.service
-./keadm join --cloudcore-ipport=175.178.160.127:10000 --edgenode-name=edge.kubeedge --kubeedge-version=1.8.0 --token=XXX
+./keadm join --cloudcore-ipport=175.178.160.127:10000 --edgenode-name=edge.kubeedge --kubeedge-version=1.8.1 --token=XXX
 #【注】在这里会出现错误，原因为github无法访问，解决方案：通过 http://ping.chinaz.com/github.com 查看ip，修改/etc/hosts：
 52.78.231.108    github.com
 185.199.111.133  raw.githubusercontent.com
@@ -367,15 +384,17 @@ sudo rm /etc/systemd/system/edgecore.service
 
 修改配置，`vim /etc/kubeedge/config/edgecore.yaml`，重启edgecore后才生效
 
-```bash
+```
 modules:
   ..
-  edgeMesh:
-    enable: false
+  edgeStream:
+    enable: true
+    handshakeTimeout: 30
   ..
   metaManager:
     metaServer:
       enable: true
+..
 ```
 
 edgecore通过systemd管理
@@ -397,6 +416,7 @@ systemctl status edgecore
 kubectl get nodes -o wide && kubectl get pods -o wide -A
 # 删除对应pod
 kubectl delete pod kube-flannel-edge-ds-775x5 -n kube-system
+kubectl delete pod edgemesh-agent-98kmp -n kubeedge
 ```
 
 后续如果关闭 edgecore 需要执行
@@ -450,11 +470,48 @@ kubectl get pod -A -owide | grep nginx
 curl nginx的IP:80
 ```
 
+查看日志
+
+```bash
+kubectl logs nginx-deployment-77f96fbb65-j58lk -n default
+```
+
 删除deployment
 
 ```bash
 kubectl get deployment -n default
 kubectl delete deployment nginx-deployment -n default
+```
+
+
+### 删除kubeedge
+
+删除kubeedge边缘节点
+
+```
+#k8s的master节点上执行 
+#查看节点
+kubectl get node 
+
+#删除节点名为:edge.kubeedge
+kubectl delete node edge.kubeedge
+```
+
+卸载kubeedge边缘节点
+
+```
+#在边缘节点上执行
+./keadm reset 
+
+#删除相关文件
+rm -rf /etc/systemd/system/edgecore.service
+rm -rf /usr/lib/systemd/system/edgecore.service
+rm -rf /etc/kubeedge
+
+#停止服务
+systemctl stop edgecore.service
+systemctl daemon-reload
+ps aux|grep edgecore
 ```
 
 
@@ -471,3 +528,6 @@ tail -f /var/log/kubeedge/cloudcore.log
 # 边缘端日志
 journalctl -u edgecore.service -b -f
 ```
+
+## 参考
+https://kubeedge.io/en/docs/setup/keadm/
