@@ -363,6 +363,16 @@ sudo apt update
 # 这一步执行完后可能同样会出现前面说的no pubkey的错误，和前面一样解决就行了
 sudo apt -y install mosquitto
 mosquitto -d -p 1883
+
+# 为了方便测试，还需要下载mosquitto-clients
+apt install mosquitto-clients
+# 并修改配置
+vim /etc/mosquitto/conf.d/mosquitto.conf
+# 添加
+allow_anonymous true
+listener 1883 0.0.0.0
+# 重启
+sudo service mosquitto restart
 ```
 
 下载keadm
