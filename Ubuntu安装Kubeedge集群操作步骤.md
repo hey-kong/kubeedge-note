@@ -35,17 +35,16 @@ deb http://mirrors.aliyun.com/ubuntu/ xenial-security universe
 deb-src http://mirrors.aliyun.com/ubuntu/ xenial-security universe
 # 然后进行以下操作
 sudo apt-get update
-sudo apt-get upgrade
+sudo apt-get -y upgrade
 sudo apt-get -y install build-essential
 sudo apt -y install docker.io
 ```
 
 注意docker的cgroup driver必须和kubelet的cgroup driver一致。
 
-然后，在云端主机上，关闭swap分区功能和防火墙，具体操作是
+关闭swap分区功能和防火墙，具体操作是
 
 ```bash
-# 云端
 sudo sed -i '/ swap / s/^/#/' /etc/fstab
 sudo swapoff -a
 sudo ufw disable
@@ -55,7 +54,7 @@ sudo ufw disable
 
 ```bash
 wget https://dl.google.com/go/go1.15.6.linux-amd64.tar.gz
-tar -zxvf go1.15.6.linux-amd64.tar.gz -C /usr/local 
+tar -zxvf go1.15.6.linux-amd64.tar.gz -C /usr/local
 #配置用户环境
 vim ~/.bashrc
 #文件末尾加上
