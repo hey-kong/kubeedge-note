@@ -92,11 +92,17 @@ tail -f /var/log/kuiper/stream.log
 开启规则
 
 ```bash
-kuiper stop rule ruleDemo
+kuiper start rule ruleDemo
 ```
 
 暂停规则
 
 ```bash
-kuiper start rule ruleDemo
+kuiper stop rule ruleDemo
+```
+
+删除规则
+
+```bash
+kuiper drop rule ruleDemo
 ```
