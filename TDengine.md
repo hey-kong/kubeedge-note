@@ -40,6 +40,7 @@ create user test pass 'test';
 
 ```
 create database test;
+use test;
 
 create stable sensordata (time timestamp,temperature float,humidity float) tags (location binary(64));
 create table bedroom_sensordata using sensordata tags("bedroom");

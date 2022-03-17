@@ -8,7 +8,7 @@
 
 需要准备一台电脑作为master（云端），另一台作为node（边缘端）节点。云端和边缘端都需要安装docker，云端还需要安装Kubernetes，边缘端不需要。
 
-安装的时候，虽然很多命令都要用root权限，但建议在自己的用户身份下操作，**不要为了省事用`sudo su`切换到root用户去操作**！因为root用户和你自己的用户本质上是两个用户，很多东西都不一样。举个例子，你自己用户的环境变量和root用户的环境变量是不一样的，你切换到root以后，很多需要环境变量的操作很可能就会出错。
+安装的时候，虽然很多命令都要用root权限，但建议在自己的用户身份下操作，**不要为了省事用`sudo su`切换到root用户去操作**！因为root用户和你自己的用户本质上是两个用户，很多东西都不一样。举个例子，你自己用户的环境变量和root用户的环境变量是不一样的，你切换到root以后，很多需要环境变量的操作很可能就会出错。另外，不要在边缘端安装**kubelet**和**kube-proxy**。
 
 首先修改Ubuntu的软件源，添加国内的镜像源，下载docker
 
@@ -73,20 +73,21 @@ sudo apt install make
 sudo apt install gcc
 ```
 
-设置hostname（可选）
+设置hostname
 
 ```bash
 # 云侧
 $ hostnamectl set-hostname cloud.kubeedge
-# 端侧
+# 端侧（可选）
 $ hostnamectl set-hostname edge.kubeedge
 ```
 
-添加 ip，`vim /etc/hosts`（可选）
+添加 ip，`vim /etc/hosts`
 
 ```bash
-# ip
+# 云侧
 8.130.22.97 cloud.kubeedge
+# 端侧（可选）
 8.130.23.131 edge.kubeedge
 ```
 
@@ -124,7 +125,7 @@ sudo apt install -y kubelet=1.20.0-00 kubeadm=1.20.0-00  kubectl=1.20.0-00
 
 ```bash
 # 云端
-sudo kubeadm init --image-repository=registry.aliyuncs.com/google_containers --kubernetes-version=v1.20.0 --upload-certs --pod-network-cidr=10.244.0.0/16
+sudo kubeadm init --image-repository=registry.aliyuncs.com/google_containers --kubernetes-version=v1.20.0 --pod-network-cidr=10.244.0.0/16
 ```
 
 如果看到以下语句，说明初始化成功
@@ -320,7 +321,7 @@ sudo apt-get update
 sudo apt-get install helm
 
 #安装edgemesh
-helm install edgemesh --set server.nodeName=cloud.kubeedge --set server.advertiseAddress="{175.178.160.127}" https://raw.githubusercontent.com/kubeedge/edgemesh/main/build/helm/edge/edgemesh/medgemesh.tgz
+helm install edgemesh --set server.nodeName=cloud.kubeedge --set server.advertiseAddress="{175.178.160.127}" https://raw.githubusercontent.com/kubeedge/edgemesh/main/build/helm/edgemesh.tgz
 
 #检验部署结果
 helm ls
@@ -383,8 +384,6 @@ wget https://github.com/kubeedge/kubeedge/releases/download/v1.8.0/keadm-v1.8.0-
 tar -zxvf keadm-v1.8.0-linux-amd64.tar.gz
 #在keadm目录下，执行join操作(注意修改ip与edgenode-name，并在token后添加在cloud中获取到的token)：
 cd keadm-v1.8.0-linux-amd64/keadm
-sudo rm /usr/local/bin/edgecore
-sudo rm /etc/systemd/system/edgecore.service
 ./keadm join --cloudcore-ipport=175.178.160.127:10000 --edgenode-name=edge.kubeedge --kubeedge-version=1.8.1 --token=XXX
 #【注】在这里会出现错误，原因为github无法访问，解决方案：通过 http://ping.chinaz.com/github.com 查看ip，修改/etc/hosts：
 52.78.231.108    github.com
@@ -409,10 +408,10 @@ modules:
 edgecore通过systemd管理
 
 ```bash
-# 关闭edgecore
+# 杀掉当前edgecore进程
 pkill edgecore
 # 重启edgecore
-systemctl reload-daemon
+systemctl daemon-reload
 systemctl restart edgecore
 # 查看edgecore状态
 systemctl status edgecore
@@ -509,18 +508,26 @@ kubectl delete node edge.kubeedge
 卸载kubeedge边缘节点
 
 ```
-#在边缘节点上执行
-./keadm reset 
-
 #删除相关文件
-rm -rf /etc/systemd/system/edgecore.service
-rm -rf /usr/lib/systemd/system/edgecore.service
+rm /usr/local/bin/edgecore
+rm /etc/systemd/system/edgecore.service
+rm /usr/lib/systemd/system/edgecore.service
 rm -rf /etc/kubeedge
 
 #停止服务
-systemctl stop edgecore.service
+pkill edgecore
 systemctl daemon-reload
 ps aux|grep edgecore
+
+#在边缘节点上执行
+./keadm reset 
+```
+
+卸载kubeedge云端节点
+
+```
+#在云端节点上执行
+./keadm reset 
 ```
 
 
