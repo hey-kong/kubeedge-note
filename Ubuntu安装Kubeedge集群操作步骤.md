@@ -512,7 +512,7 @@ kubectl delete node edge.kubeedge
 rm /usr/local/bin/edgecore
 rm /etc/systemd/system/edgecore.service
 rm /usr/lib/systemd/system/edgecore.service
-rm -rf /etc/kubeedge
+rm -rf /etc/kubeedge/*
 
 #停止服务
 pkill edgecore
@@ -532,8 +532,6 @@ ps aux|grep edgecore
 
 
 ### 注意
-
-如果需要重新部署云端或边缘端，需要在云端或边缘端删除`/etc/kubeedge`目录，再用keadm部署
 
 日志查看
 

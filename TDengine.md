@@ -46,6 +46,8 @@ create stable sensordata (time timestamp,temperature float,humidity float) tags 
 create table bedroom_sensordata using sensordata tags("bedroom");
 create table balcony_sensordata using sensordata tags("balcony");
 create table toilet_sensordata using sensordata tags("toilet");
+
+create table sensor (time timestamp,id nchar(20),temperature float,humidity float);
 ```
 
 创建 device1、device2、device3 三个 stream，分别接收MQTT test/bedroom、test/balcony、test/toilet 主题消息
@@ -162,6 +164,46 @@ Connecting to 127.0.0.1:20498...
     "status": "Running"
   }
 ]
+```
+
+发送 POST 请求
+```
+curl -X POST \
+  http://175.178.163.249:9081/streams \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "sql": "create stream demo (id STRING, temperature BIGINT, humidity BIGINT) WITH (FORMAT=\"JSON\", DATASOURCE=\"zigbee/0ea11c12123a\")"
+}'
+
+curl -X POST \
+  http://175.178.163.249:9081/rules \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "id": "rule1",
+  "sql": "SELECT id, temperature, humidity FROM demo WHERE isNull(id, temperature, humidity) = false",
+  "actions": [
+    {
+      "tdengine": {
+          "provideTs": false,
+          "tsFieldName": "time",
+          "port": 0,
+          "ip": "127.0.0.1",
+          "user": "test",
+          "password": "test",
+          "database": "test",
+          "table": "sensor",
+          "fields": [
+              "id",
+              "temperature",
+              "humidity"
+          ]
+      }
+    },
+    {
+      "log": {}
+    }
+  ]
+}'
 ```
 
 用 Go 编写测试代码（见附录），向 MQTT Broker 发送温度和湿度数据。一段时间过后，在 TDengine 客户端查看接收到的数据
