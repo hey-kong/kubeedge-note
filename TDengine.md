@@ -10,6 +10,15 @@ apt-cache policy tdengine
 sudo apt-get install tdengine
 ```
 
+或者
+
+```
+wget https://www.taosdata.com/assets-download/TDengine-server-2.2.0.2-Linux-x64.tar.gz
+tar -zxvf TDengine-server-2.2.0.2-Linux-x64.tar.gz
+cd TDengine-server-2.2.0.2/
+sudo ./install.sh
+```
+
 启动
 
 ```bash
@@ -22,12 +31,30 @@ systemctl start taosd
 taos
 ```
 
+## 设置 fqdn
+
+这里将 TDengine server 节点名设置为 `metaedge.td1`，在此基础之上设置 fqdn
+
+设置 hostname
+
+```
+hostnamectl set-hostname metaedge.td1
+```
+
+然后重启机器。修改 `/var/lib/taos/dnode/dnodeEps.json`，将 dnodeFqdn 字段设置为 `metaedge.td1`。再重启
+
+```
+sudo service taosd restart
+```
+
+客户端需要配置 /etc/hosts 里面写入 `server-ip metaedge.td1`
+
 ## 与 Kuiper 交互
 
-安装 TDengine 插件，注意当前 TDengine 客户端版本为 2.4.0.12
+安装 TDengine 插件，注意当前 TDengine 客户端版本为 2.2.0.2
 
 ```bash
-curl -d "{\"name\":\"tdengine\",\"file\":\"https://packages.emqx.io/kuiper-plugins/1.4.3/debian/sinks/tdengine_amd64.zip\",\"shellParas\": [\"2.4.0.12\"]}" http://127.0.0.1:9081/plugins/sinks
+curl -d "{\"name\":\"tdengine\",\"file\":\"https://packages.emqx.io/kuiper-plugins/1.4.3/debian/sinks/tdengine_amd64.zip\",\"shellParas\": [\"2.2.0.2\"]}" http://127.0.0.1:9081/plugins/sinks
 ```
 
 进入 TDengine 客户端，创建 test 用户
@@ -39,15 +66,15 @@ create user test pass 'test';
 切换 test 用户，创建数据库和数据表
 
 ```
-create database test;
 use test;
+create database test;
 
 create stable sensordata (time timestamp,temperature float,humidity float) tags (location binary(64));
 create table bedroom_sensordata using sensordata tags("bedroom");
 create table balcony_sensordata using sensordata tags("balcony");
 create table toilet_sensordata using sensordata tags("toilet");
 
-create table sensor (time timestamp,id nchar(20),temperature float,humidity float);
+create table sensor (time timestamp,id nchar(20),temperature int,humidity int);
 ```
 
 创建 device1、device2、device3 三个 stream，分别接收MQTT test/bedroom、test/balcony、test/toilet 主题消息

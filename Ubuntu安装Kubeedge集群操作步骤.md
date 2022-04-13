@@ -543,5 +543,53 @@ tail -f /var/log/kubeedge/cloudcore.log
 journalctl -u edgecore.service -b -f
 ```
 
+## 用证书或者 token 访问集群 api 接口
+
+使用 k8s 的过程中需要访问集群的 api 接口，但是通常 k8s 的 apiserver 都是用 https 认证，当我们想直接访问 api 接口的时候都是需要进行认证的
+
+当我们需要在其他机器上通过代码或者用 curl 请求去访问集群的 api 接口时，我们需要通过客户端证书或者集群 token 来访问 api 接口
+
+### 客户端证书访问集群 api 接口
+
+进入到 k8s 的配置目录下
+
+```
+cd /etc/kubernetes
+```
+
+获取 cert 和 key 信息，拿到 client-cert.pem 和 client-key.pem
+
+```
+cat ./admin.conf | grep client-certificate-data | awk -F ' ' '{print $2}' | base64 -d > client-cert.pem
+cat ./admin.conf | grep client-key-data | awk -F ' ' '{print $2}' | base64 -d > client-key.pem
+```
+
+客户端获取集群中所有 namespace
+
+```
+curl --cert client-cert.pem --key client-key.pem -k $APISERVER/api/v1/namespaces
+```
+
+### token 访问 api
+
+```
+kubectl create serviceaccount admin -n kube-system
+kubectl create clusterrolebinding metaedge-cluster-admin --clusterrole=cluster-admin --serviceaccount=kube-system:admin
+```
+
+拿到 token
+
+```
+kubectl get secret -n kube-system
+
+kubectl describe secret admin-token-b29dl -n kube-system
+```
+
+客户端获取集群中所有 namespace
+
+```
+curl curl -k -H "Authorization: Bearer $token" -k $APISERVER/api/v1/namespaces
+```
+
 ## 参考
 https://kubeedge.io/en/docs/setup/keadm/
