@@ -199,7 +199,7 @@ curl -X POST \
   http://175.178.163.249:9081/streams \
   -H 'Content-Type: application/json' \
   -d '{
-  "sql": "create stream demo (id STRING, temperature BIGINT, humidity BIGINT) WITH (FORMAT=\"JSON\", DATASOURCE=\"zigbee/0ea11c12123a\")"
+  "sql": "create stream demo (id STRING, temperature BIGINT, humidity BIGINT) WITH (FORMAT=\"JSON\", DATASOURCE=\"zigbee/00000002\")"
 }'
 
 curl -X POST \
