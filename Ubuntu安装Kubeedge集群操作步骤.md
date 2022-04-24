@@ -320,6 +320,9 @@ echo "deb https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt
 sudo apt-get update
 sudo apt-get install helm
 
+#卸载老的edgemesh
+helm uninstall edgemesh
+
 #安装edgemesh
 helm install edgemesh --set server.nodeName=cloud.kubeedge --set server.advertiseAddress="{175.178.160.127}" https://raw.githubusercontent.com/kubeedge/edgemesh/main/build/helm/edgemesh.tgz
 
@@ -370,7 +373,7 @@ apt install mosquitto-clients
 vim /etc/mosquitto/conf.d/mosquitto.conf
 # 添加
 allow_anonymous true
-listener 1883 0.0.0.0
+listener 1883
 # 重启
 sudo service mosquitto restart
 ```
