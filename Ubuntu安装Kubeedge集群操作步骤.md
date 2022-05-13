@@ -33,11 +33,15 @@ deb http://mirrors.aliyun.com/ubuntu/ xenial-security main
 deb-src http://mirrors.aliyun.com/ubuntu/ xenial-security main
 deb http://mirrors.aliyun.com/ubuntu/ xenial-security universe
 deb-src http://mirrors.aliyun.com/ubuntu/ xenial-security universe
+
 # 然后进行以下操作
 sudo apt-get update
 sudo apt-get -y upgrade
 sudo apt-get -y install build-essential
 sudo apt -y install docker.io
+
+# 如果是 ARM64 架构
+# 参考 https://blog.csdn.net/qq_34253926/article/details/121629068
 ```
 
 注意docker的cgroup driver必须和kubelet的cgroup driver一致。
@@ -53,8 +57,8 @@ sudo ufw disable
 安装golang，运行以下命令
 
 ```bash
-wget https://dl.google.com/go/go1.15.6.linux-amd64.tar.gz
-tar -zxvf go1.15.6.linux-amd64.tar.gz -C /usr/local
+wget https://dl.google.com/go/go1.17.4.linux-amd64.tar.gz
+tar -zxvf go1.17.4.linux-amd64.tar.gz -C /usr/local
 #配置用户环境
 vim ~/.bashrc
 #文件末尾加上
