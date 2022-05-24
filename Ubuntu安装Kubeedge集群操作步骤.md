@@ -260,17 +260,17 @@ kubectl apply -f kube-flannel-edge.yml
 
 ### 主节点开启Kubeedge cloud服务
 
-这里部署Kubeedge v1.9.1。下载keadm
+这里部署Kubeedge v1.8.1。下载keadm
 
 ```bash
 #可自行前往官网下载
-wget https://github.com/kubeedge/kubeedge/releases/download/v1.9.1/keadm-v1.9.1-linux-amd64.tar.gz
+wget https://github.com/kubeedge/kubeedge/releases/download/v1.8.1/keadm-v1.8.1-linux-amd64.tar.gz
 #解压压缩包
-tar -zxvf keadm-v1.9.1-linux-amd64.tar.gz
+tar -zxvf keadm-v1.8.1-linux-amd64.tar.gz
 #master部署kubeedge
-cd keadm-v1.9.1-linux-amd64/keadm
+cd keadm-v1.8.1-linux-amd64/keadm
 #在keadm目录下，执行init操作(ip为master结点ip)：
-./keadm init --advertise-address="175.178.160.127" --kubeedge-version=1.9.1
+./keadm init --advertise-address="175.178.160.127" --kubeedge-version=1.8.1
 #【注】在这里会出现错误，原因为github无法访问，解决方案：通过 http://ping.chinaz.com/github.com 查看ip，修改/etc/hosts：
 52.78.231.108    github.com
 185.199.111.133  raw.githubusercontent.com
@@ -285,7 +285,7 @@ chmod +x /etc/kubeedge/certgen.sh
 /etc/kubeedge/certgen.sh stream
 ```
 
-在keadm-v1.9.1-linux-amd64/keadm目录下执行`./keadm gettoken`获取token。
+在keadm-v1.8.1-linux-amd64/keadm目录下执行`./keadm gettoken`获取token。
 
 修改配置，`vim /etc/kubeedge/config/cloudcore.yaml`，重启cloudcore后才生效
 
@@ -347,6 +347,8 @@ helm uninstall edgemesh
 
 #安装edgemesh
 helm install edgemesh \
+--set agent.image=kubeedge/edgemesh-agent:v1.10.0 \
+--set server.image=kubeedge/edgemesh-server:v1.10.0 \
 --set server.nodeName=cloud.kubeedge \
 --set server.advertiseAddress="{175.178.160.127}" \
 https://raw.githubusercontent.com/kubeedge/edgemesh/main/build/helm/edgemesh.tgz
@@ -407,12 +409,12 @@ sudo service mosquitto restart
 
 ```bash
 #可自行前往官网下载
-wget https://github.com/kubeedge/kubeedge/releases/download/v1.9.1/keadm-v1.9.1-linux-amd64.tar.gz
+wget https://github.com/kubeedge/kubeedge/releases/download/v1.8.1/keadm-v1.8.1-linux-amd64.tar.gz
 #解压压缩包
-tar -zxvf keadm-v1.9.1-linux-amd64.tar.gz
+tar -zxvf keadm-v1.8.1-linux-amd64.tar.gz
 #在keadm目录下，执行join操作(注意修改ip与edgenode-name，并在token后添加在cloud中获取到的token)：
-cd keadm-v1.9.1-linux-amd64/keadm
-./keadm join --cloudcore-ipport=175.178.160.127:10000 --edgenode-name=edge.kubeedge --kubeedge-version=1.9.1 --token=XXX
+cd keadm-v1.8.1-linux-amd64/keadm
+./keadm join --cloudcore-ipport=175.178.160.127:10000 --edgenode-name=edge.kubeedge --kubeedge-version=1.8.1 --token=XXX
 #【注】在这里会出现错误，原因为github无法访问，解决方案：通过 http://ping.chinaz.com/github.com 查看ip，修改/etc/hosts：
 52.78.231.108    github.com
 185.199.111.133  raw.githubusercontent.com
@@ -422,6 +424,10 @@ cd keadm-v1.9.1-linux-amd64/keadm
 
 ```
 modules:
+  ..
+  edged:
+    clusterDNS: 169.254.96.16
+    clusterDomain: cluster.local
   ..
   edgeStream:
     enable: true
