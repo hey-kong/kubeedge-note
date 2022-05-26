@@ -1,4 +1,4 @@
-# Ubuntu安装Kubeedge集群操作步骤
+# Ubuntu 20.04安装Kubeedge集群操作步骤
 
 ## 版本要求
 
@@ -18,21 +18,20 @@
 sudo cp /etc/apt/sources.list /etc/apt/sources.list.bak
 sudo vim /etc/apt/sources.list
 # 将以下内容写到该文件末尾
-deb http://mirrors.aliyun.com/ubuntu/ xenial main
-deb-src http://mirrors.aliyun.com/ubuntu/ xenial main
- 
-deb http://mirrors.aliyun.com/ubuntu/ xenial-updates main
-deb-src http://mirrors.aliyun.com/ubuntu/ xenial-updates main
- 
-deb http://mirrors.aliyun.com/ubuntu/ xenial universe
-deb-src http://mirrors.aliyun.com/ubuntu/ xenial universe
-deb http://mirrors.aliyun.com/ubuntu/ xenial-updates universe
-deb-src http://mirrors.aliyun.com/ubuntu/ xenial-updates universe
- 
-deb http://mirrors.aliyun.com/ubuntu/ xenial-security main
-deb-src http://mirrors.aliyun.com/ubuntu/ xenial-security main
-deb http://mirrors.aliyun.com/ubuntu/ xenial-security universe
-deb-src http://mirrors.aliyun.com/ubuntu/ xenial-security universe
+deb http://mirrors.aliyun.com/ubuntu/ focal main restricted universe multiverse
+deb-src http://mirrors.aliyun.com/ubuntu/ focal main restricted universe multiverse
+
+deb http://mirrors.aliyun.com/ubuntu/ focal-security main restricted universe multiverse
+deb-src http://mirrors.aliyun.com/ubuntu/ focal-security main restricted universe multiverse
+
+deb http://mirrors.aliyun.com/ubuntu/ focal-updates main restricted universe multiverse
+deb-src http://mirrors.aliyun.com/ubuntu/ focal-updates main restricted universe multiverse
+
+# deb http://mirrors.aliyun.com/ubuntu/ focal-proposed main restricted universe multiverse
+# deb-src http://mirrors.aliyun.com/ubuntu/ focal-proposed main restricted universe multiverse
+
+deb http://mirrors.aliyun.com/ubuntu/ focal-backports main restricted universe multiverse
+deb-src http://mirrors.aliyun.com/ubuntu/ focal-backports main restricted universe multiverse
 
 # 然后进行以下操作
 sudo apt-get update
@@ -140,7 +139,7 @@ gpg --keyserver keyserver.ubuntu.com --recv <PUBKEY># 此处填报错的公钥
 gpg --export --armor <PUBKEY> | sudo apt-key add - # 同上
 # 有几个报错的公钥就执行几遍，全部执行完以后再执行以下操作
 sudo apt update
-sudo apt install -y kubelet=1.20.0-00 kubeadm=1.20.0-00  kubectl=1.20.0-00
+sudo apt install -y kubelet=1.20.0-00 kubeadm=1.20.0-00 kubectl=1.20.0-00
 ```
 
 然后用kubeadm初始化Kubernetes集群

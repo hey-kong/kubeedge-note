@@ -69,19 +69,30 @@ kubectl describe nodes cloud.kubeedge
 kubectl taint nodes cloud.kubeedge node-role.kubernetes.io/master:NoSchedule-
 ```
 
-## 概念
-### Dataset
+## 调试
 
-<div align=center>
-<img src="sedna/image2020-11-11_12-4-27.png" style="zoom:100%;" />
-</div>
+修改代码后调试需要重新构建镜像，这里使用阿里云容器镜像服务，公网为 `registry.cn-qingdao.aliyuncs.com`，命名空间为 `wl-metaedge`
 
-dataset crd 中需要设置的字段有 nodeName、url 和 format。nodeName 指定此 dataset crd 由哪个边缘节点管理；url 为 dataset 所在路径，可以是边缘节点本地路径，也可以是共享存储；format 目前只支持 txt 和 csv。
+在服务器上登录阿里云 Docker Registry，用于登录的用户名为阿里云账号全名，密码为开通服务时设置的密码
 
-dataset crd 创建后，主要就看 Dataset Manager，它会定时（MonitorDataSourceIntervalSeconds，默认 60s）重复两件事情，一是从 url 中读取数据集，二是通过 websocket 向云端推送状态，状态中包含数据集的行数(numberOfSamples)以及数据集更新的时间(updateTime)。
+```
+docker login --username=******@mail.com registry.cn-qingdao.aliyuncs.com
+```
 
-### Model
+在镜像中编译 gm、lc 或 kb，其 DockerFile 分别为 sedna/build/{gm,lc,kb}/Dockerfile。以 kb 为例，进入 sedna 目录后，执行 `docker build`
 
-model 与 dataset 类似，且创建时不用指定 nodeName，也没有 controller 监控。
+```
+docker build -f build/kb/Dockerfile -t registry.cn-qingdao.aliyuncs.com/wl-metaedge/sedna-kb:[镜像版本号] .
+```
 
-model 的信息将在使用该 model 的联邦学习等任务时被同步；当相应的训练/推理工作完成后，model 的状态将被更新。
+使用 `docker push` 命令将该镜像推送至远程
+
+```
+docker push registry.cn-qingdao.aliyuncs.com/wl-metaedge/sedna-kb:[镜像版本号]
+```
+
+从 Registry 中拉取镜像
+
+```
+docker pull registry.cn-qingdao.aliyuncs.com/wl-metaedge/sedna-kb:[镜像版本号]
+```
