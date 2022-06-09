@@ -357,6 +357,8 @@ helm ls
 kubectl get all -n kubeedge -o wide
 ```
 
+如果 edgemesh 未启动成功，需要查看 pod 日志检查端口是否被占用
+
 使用kubeadm部署的k8s集群，那么kube-proxy会下发到端侧节点，但是edgecore无法与kube-proxy并存，所以要修改kube-proxy的daemonset节点亲和性，禁止在端侧部署kube-proxy
 ```bash
 kubectl edit ds kube-proxy -n kube-system

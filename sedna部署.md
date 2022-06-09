@@ -71,28 +71,28 @@ kubectl taint nodes cloud.kubeedge node-role.kubernetes.io/master:NoSchedule-
 
 ## 调试
 
-修改代码后调试需要重新构建镜像，这里使用阿里云容器镜像服务，公网为 `registry.cn-qingdao.aliyuncs.com`，命名空间为 `wl-metaedge`
+修改代码后调试需要重新构建镜像，这里使用阿里云容器镜像服务，公网为 `pdsl-registry.cn-shenzhen.cr.aliyuncs.com`，命名空间为 `sedna`
 
 在服务器上登录阿里云 Docker Registry，用于登录的用户名为阿里云账号全名，密码为开通服务时设置的密码
 
 ```
-docker login --username=******@mail.com registry.cn-qingdao.aliyuncs.com
+docker login --username=aliyun5782043170 pdsl-registry.cn-shenzhen.cr.aliyuncs.com
 ```
 
 在镜像中编译 gm、lc 或 kb，其 DockerFile 分别为 sedna/build/{gm,lc,kb}/Dockerfile。以 kb 为例，进入 sedna 目录后，执行 `docker build`
 
 ```
-docker build -f build/kb/Dockerfile -t registry.cn-qingdao.aliyuncs.com/wl-metaedge/sedna-kb:[镜像版本号] .
+docker build -f build/kb/Dockerfile -t pdsl-registry.cn-shenzhen.cr.aliyuncs.com/sedna/sedna-kb:[镜像版本号] .
 ```
 
 使用 `docker push` 命令将该镜像推送至远程
 
 ```
-docker push registry.cn-qingdao.aliyuncs.com/wl-metaedge/sedna-kb:[镜像版本号]
+docker push pdsl-registry.cn-shenzhen.cr.aliyuncs.com/sedna/sedna-kb:[镜像版本号]
 ```
 
 从 Registry 中拉取镜像
 
 ```
-docker pull registry.cn-qingdao.aliyuncs.com/wl-metaedge/sedna-kb:[镜像版本号]
+docker pull pdsl-registry.cn-shenzhen.cr.aliyuncs.com/sedna/sedna-kb:[镜像版本号]
 ```
