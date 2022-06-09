@@ -60,7 +60,15 @@ mv buildx-v0.8.1.linux-arm64 ~/.docker/cli-plugins/docker-buildx
 }
 ```
 
-重启，`sudo systemctl restart docker`
+重启，`sudo systemctl restart docker`，并创建构建实例
+```
+docker buildx create --name mybuilder --use
+```
+
+通过 qemu 安装模拟器
+```
+docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+```
 
 
 ## 下载基础镜像
