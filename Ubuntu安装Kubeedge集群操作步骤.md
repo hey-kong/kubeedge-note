@@ -90,8 +90,8 @@ go version
 然后安装gcc，make
 
 ```bash
-sudo apt install make
-sudo apt install gcc
+sudo apt install -y make
+sudo apt install -y gcc
 ```
 
 设置hostname
@@ -120,26 +120,20 @@ $ hostnamectl set-hostname edge.kubeedge
 
 ```bash
 # 云端
-# 安装必要的依赖
-sudo apt update
+# 支持https传送
 sudo apt install -y apt-transport-https
+# 添加访问公钥
+curl https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg | apt-key add - 
 # 添加kubernetes的软件源
-sudo vim /etc/apt/sources.list.d/kubernetes.list # 如果没有sources.list.d就先创建这个文件夹
-# 将以下内容写到该文件中
+cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
 deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main
-# 然后执行以下操作
+EOF
+# 更新缓存索引
 sudo apt update
-```
-
-不出意外的话，上一步操作进行完了以后会报错，报错内容是`no PUBKEY XXXXXX`，这时需要执行以下操作
-
-```bash
-# 云端
-gpg --keyserver keyserver.ubuntu.com --recv <PUBKEY># 此处填报错的公钥
-gpg --export --armor <PUBKEY> | sudo apt-key add - # 同上
-# 有几个报错的公钥就执行几遍，全部执行完以后再执行以下操作
-sudo apt update
-sudo apt install -y kubelet=1.20.0-00 kubeadm=1.20.0-00 kubectl=1.20.0-00
+# 安装指定版本
+sudo apt install -y kubelet=1.20.0-00 kubeadm=1.20.0-00 kubectl=1.20.0-00 --allow-downgrades
+# 开机自启kubelet
+systemctl enable kubelet
 ```
 
 然后用kubeadm初始化Kubernetes集群
@@ -267,9 +261,9 @@ wget https://github.com/kubeedge/kubeedge/releases/download/v1.9.2/keadm-v1.9.2-
 #解压压缩包
 tar -zxvf keadm-v1.9.2-linux-amd64.tar.gz
 #master部署kubeedge
-cd keadm-v1.9.2-linux-amd64/keadm
+cp keadm-v1.9.2-linux-amd64/keadm/keadm /usr/local/bin/
 #在keadm目录下，执行init操作(ip为master结点ip)：
-./keadm init --advertise-address="175.178.160.127" --kubeedge-version=1.9.2
+keadm init --advertise-address="175.178.160.127" --kubeedge-version=1.9.2
 #【注】在这里会出现错误，原因为github无法访问，解决方案：通过 http://ping.chinaz.com/github.com 查看ip，修改/etc/hosts：
 52.78.231.108    github.com
 185.199.111.133  raw.githubusercontent.com
@@ -284,7 +278,7 @@ chmod +x /etc/kubeedge/certgen.sh
 /etc/kubeedge/certgen.sh stream
 ```
 
-在keadm-v1.9.2-linux-amd64/keadm目录下执行`./keadm gettoken`获取token。
+在keadm-v1.9.2-linux-amd64/keadm目录下执行`keadm gettoken`获取token。
 
 修改配置，`vim /etc/kubeedge/config/cloudcore.yaml`，重启cloudcore后才生效
 
@@ -320,8 +314,7 @@ iptables -t nat -A OUTPUT -p tcp --dport 10351 -j DNAT --to 10.0.12.14:10003
 cloudcore通过systemd管理
 
 ```bash
-# 拷贝cloudcore.service到/usr/lib/systemd/system
-cp /etc/kubeedge/cloudcore.service /usr/lib/systemd/system
+cp /etc/kubeedge/cloudcore.service /etc/systemd/system/cloudcore.service
 # 杀掉当前cloudcore进程
 pkill cloudcore
 # 重启cloudcore
@@ -392,7 +385,6 @@ rm /usr/lib/systemd/system/cloudcore.service
 # 边缘端
 sudo add-apt-repository ppa:mosquitto-dev/mosquitto-ppa 
 sudo apt update
-# 这一步执行完后可能同样会出现前面说的no pubkey的错误，和前面一样解决就行了
 sudo apt -y install mosquitto
 mosquitto -d -p 1883
 
@@ -415,8 +407,8 @@ wget https://github.com/kubeedge/kubeedge/releases/download/v1.9.2/keadm-v1.9.2-
 #解压压缩包
 tar -zxvf keadm-v1.9.2-linux-amd64.tar.gz
 #在keadm目录下，执行join操作(注意修改ip与edgenode-name，并在token后添加在cloud中获取到的token)：
-cd keadm-v1.9.2-linux-amd64/keadm
-./keadm join --cloudcore-ipport=175.178.160.127:10000 --edgenode-name=edge.kubeedge --kubeedge-version=1.9.2 --token=XXX
+cp keadm-v1.9.2-linux-amd64/keadm/keadm /usr/local/bin/
+keadm join --cloudcore-ipport=175.178.160.127:10000 --edgenode-name=edge.kubeedge --kubeedge-version=1.9.2 --token=XXX
 #【注】在这里会出现错误，原因为github无法访问，解决方案：通过 http://ping.chinaz.com/github.com 查看ip，修改/etc/hosts：
 52.78.231.108    github.com
 185.199.111.133  raw.githubusercontent.com
@@ -556,14 +548,14 @@ systemctl daemon-reload
 ps aux|grep edgecore
 
 #在边缘节点上执行
-./keadm reset 
+keadm reset 
 ```
 
 卸载kubeedge云端节点
 
 ```
 #在云端节点上执行
-./keadm reset 
+keadm reset 
 ```
 
 
