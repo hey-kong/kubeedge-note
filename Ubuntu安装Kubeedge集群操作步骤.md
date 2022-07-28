@@ -420,7 +420,7 @@ keadm join --cloudcore-ipport=175.178.160.127:10000 --edgenode-name=edge.kubeedg
 modules:
   ..
   edged:
-    clusterDNS: 169.254.96.16
+    clusterDNS: 169.254.96.16,8.8.8.8
     clusterDomain: cluster.local
   ..
   edgeStream:
