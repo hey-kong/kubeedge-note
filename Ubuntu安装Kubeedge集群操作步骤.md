@@ -274,6 +274,7 @@ keadm init --advertise-address="175.178.160.127" --kubeedge-version=1.9.2
 ```bash
 export CLOUDCOREIPS="175.178.160.127"
 #复制kubeedge生成证书的certgen.sh文件，放入/etc/kubeedge
+mv certgen.sh /etc/kubeedge/
 chmod +x /etc/kubeedge/certgen.sh
 /etc/kubeedge/certgen.sh stream
 ```
@@ -419,13 +420,13 @@ keadm join --cloudcore-ipport=175.178.160.127:10000 --edgenode-name=edge.kubeedg
 ```
 modules:
   ..
-  edged:
-    clusterDNS: 169.254.96.16,8.8.8.8
-    clusterDomain: cluster.local
-  ..
   edgeStream:
     enable: true
     handshakeTimeout: 30
+  ..
+  edged:
+    clusterDNS: 169.254.96.16,8.8.8.8
+    clusterDomain: cluster.local
   ..
   metaManager:
     metaServer:
