@@ -414,6 +414,7 @@ keadm join --cloudcore-ipport=175.178.160.127:10000 --edgenode-name=edge.kubeedg
 52.78.231.108    github.com
 185.199.111.133  raw.githubusercontent.com
 ```
+#【注】 在边缘节点 join 无报错，但是仍未加入节点，docker ps 显示为空，可查看 /etc/kubeedge/config/edgecore.yaml 配置文件中，确认文件中服务器的端口在云服务器上已开放
 
 修改配置，`vim /etc/kubeedge/config/edgecore.yaml`，重启edgecore后才生效
 
