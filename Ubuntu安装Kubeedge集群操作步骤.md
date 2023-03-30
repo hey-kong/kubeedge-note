@@ -262,8 +262,8 @@ wget https://github.com/kubeedge/kubeedge/releases/download/v1.9.2/keadm-v1.9.2-
 tar -zxvf keadm-v1.9.2-linux-amd64.tar.gz
 #master部署kubeedge
 cp keadm-v1.9.2-linux-amd64/keadm/keadm /usr/local/bin/
-#在keadm目录下，执行init操作(ip为master结点ip)：
-keadm init --advertise-address="175.178.160.127" --kubeedge-version=1.9.2
+#在keadm目录下，执行init操作(ip为master节点公网ip)：
+keadm init --advertise-address="39.108.15.57" --kubeedge-version=1.9.2
 #【注】在这里会出现错误，原因为github无法访问，解决方案：通过 http://ping.chinaz.com/github.com 查看ip，修改/etc/hosts：
 52.78.231.108    github.com
 185.199.111.133  raw.githubusercontent.com
@@ -272,7 +272,7 @@ keadm init --advertise-address="175.178.160.127" --kubeedge-version=1.9.2
 生成stream证书
 
 ```bash
-export CLOUDCOREIPS="175.178.160.127"
+export CLOUDCOREIPS="39.108.15.57"
 #复制kubeedge生成证书的certgen.sh文件，放入/etc/kubeedge
 mv certgen.sh /etc/kubeedge/
 chmod +x /etc/kubeedge/certgen.sh
@@ -303,13 +303,13 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   annotations:
-    tunnelportrecord.kubeedge.io: '{"ipTunnelPort":{"10.0.12.14":10351},"port":{"10351":true}}'
+    tunnelportrecord.kubeedge.io: '{"ipTunnelPort":{"172.22.57.109":10351},"port":{"10351":true}}'
   creationTimestamp: "2022-03-10T06:01:15Z"
 ...
 
 # 根据ConfigMap设置iptables
 # iptables -t nat -A OUTPUT -p tcp --dport $YOUR-TUNNEL-PORT -j DNAT --to $YOUR-CLOUDCORE-IP:10003
-iptables -t nat -A OUTPUT -p tcp --dport 10351 -j DNAT --to 10.0.12.14:10003
+iptables -t nat -A OUTPUT -p tcp --dport 10351 -j DNAT --to 172.22.57.109:10003
 ```
 
 cloudcore通过systemd管理
@@ -340,10 +340,10 @@ helm uninstall edgemesh
 
 #安装edgemesh
 helm install edgemesh \
---set agent.image=kubeedge/edgemesh-agent:v1.10.0 \
---set server.image=kubeedge/edgemesh-server:v1.10.0 \
+--set agent.image=kubeedge/edgemesh-agent:v1.12.0 \
+--set server.image=kubeedge/edgemesh-server:v1.12.0 \
 --set server.nodeName=cloud.kubeedge \
---set server.advertiseAddress="{175.178.160.127}" \
+--set server.advertiseAddress="{39.108.15.57}" \
 https://raw.githubusercontent.com/kubeedge/edgemesh/main/build/helm/edgemesh.tgz
 
 #检验部署结果
@@ -409,7 +409,7 @@ wget https://github.com/kubeedge/kubeedge/releases/download/v1.9.2/keadm-v1.9.2-
 tar -zxvf keadm-v1.9.2-linux-amd64.tar.gz
 #在keadm目录下，执行join操作(注意修改ip与edgenode-name，并在token后添加在cloud中获取到的token)：
 cp keadm-v1.9.2-linux-amd64/keadm/keadm /usr/local/bin/
-keadm join --cloudcore-ipport=175.178.160.127:10000 --edgenode-name=edge.kubeedge --kubeedge-version=1.9.2 --token=XXX
+keadm join --cloudcore-ipport=39.108.15.57:10000 --edgenode-name=edge.kubeedge --kubeedge-version=1.9.2 --token=XXX
 #【注】在这里会出现错误，原因为github无法访问，解决方案：通过 http://ping.chinaz.com/github.com 查看ip，修改/etc/hosts：
 52.78.231.108    github.com
 185.199.111.133  raw.githubusercontent.com
