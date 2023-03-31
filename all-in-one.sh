@@ -32,7 +32,7 @@ case $arch in
 "amd64")
      apt-get -y update
      apt-get -y install build-essential
-     apt -y install docker.io
+     apt -y install docker-ce
     ;;
 "arm64")
     apt-get -y install wget
@@ -88,7 +88,11 @@ apt -y install make
 apt -y install gcc
 
 # download and install mosquitto
+# cd /usr/lib/python3/dist-packages/gi
+# sudo ln -s _gi.cpython-{36m,37m}-x86_64-linux-gnu.so
+# cd -
 add-apt-repository ppa:mosquitto-dev/mosquitto-ppa
+apt-get update
 apt -y install mosquitto
 mosquitto -d -p 1883
 
